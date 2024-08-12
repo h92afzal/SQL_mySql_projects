@@ -1,0 +1,359 @@
+select *
+from employee_demographics;
+
+select first_name,
+last_name,
+birth_date,
+age,
+age+10
+from employee_demographics;
+
+select distinct gender
+from employee_demographics;
+
+select * 
+from employee_salary
+where first_name = 'Leslie';
+
+-- Math operators < , >, ,<=, >=, != 
+select *
+from employee_demographics
+where birth_date > '1985-01-01'
+and gender='male';
+
+-- Logical operators and,or,not
+-- Like statement
+-- % and _
+select *
+from employee_demographics
+where first_name like '%er%';
+
+select *
+from employee_demographics
+where first_name like 'a__%';
+-- We can not only apply to strings but we can apply these operators to all data types 
+select *
+from employee_demographics
+where birth_date like '1985%';
+
+-- Group by and Order by 
+-- Aggregate functions
+select gender,avg(age), max(age), min(age),count(age)
+from employee_demographics
+group by gender;
+
+select occupation,salary
+from employee_salary
+group by occupation,salary;
+
+-- Order by actually sort the data in asc or desc
+select *
+from employee_demographics
+order by gender,age desc;
+
+-- We can order by column positions 
+select *
+from employee_demographics
+order by 5,4 desc;
+
+-- Where and Having
+
+select gender,avg(age)
+from employee_demographics
+group by gender
+having avg(age)<40;
+
+select occupation, avg(salary)
+from employee_salary
+where occupation like '%manager%'
+group by occupation
+having avg(salary)>75000;
+
+-- Limit and Aliasing
+
+select *
+from employee_demographics
+order by  age desc
+limit 3
+;
+
+select *
+from employee_demographics
+order by  age desc
+limit 2, 1
+;
+
+select gender,avg(age) as avg_age
+from employee_demographics
+group by gender
+having avg_age>40;
+
+select gender,avg(age) avg_age
+from employee_demographics
+group by gender
+having avg_age>40;
+
+-- Joins
+
+select *
+from employee_demographics ed
+inner join employee_salary es
+on ed.employee_id=es.employee_id;
+
+
+select ed.employee_id, age, occupation
+from employee_demographics ed
+inner join employee_salary es
+on ed.employee_id=es.employee_id;
+
+-- Oute join
+select *
+from employee_demographics ed
+left join employee_salary es
+on ed.employee_id=es.employee_id;
+
+select *
+from employee_demographics ed
+right join employee_salary es
+on ed.employee_id=es.employee_id;
+
+-- Self Join
+
+select e1.employee_id as emplyoyee_santa,
+e1.first_name as f_name_Santa,
+e2.first_name as f_name_santa
+from employee_salary e1
+join employee_salary e2
+ on e1.employee_id + 1 =e2.employee_id;
+ 
+ -- Join multiple Tables
+ 
+ select *
+from employee_demographics ed
+inner join employee_salary es
+  on ed.employee_id=es.employee_id
+inner join parks_departments pd
+  on es.dept_id = pd.department_id
+;
+
+-- Unions  
+
+select first_name,last_name, 'Old Man' as Label
+from employee_demographics
+where age >40 and gender='male'
+union
+select first_name,last_name, 'Old Lady' as Label
+from employee_demographics
+where age >40 and gender='Female'
+union
+select first_name,last_name, 'Highly Paid' as Label
+from employee_salary
+where salary>70000
+order by first_name,last_name;
+
+-- String Functions
+
+select first_name, length(first_name)
+from employee_demographics
+order by 2;
+
+select first_name, upper(first_name)
+from employee_demographics;
+
+select first_name, lowe(first_name)
+from employee_demographics;
+
+select trim('           sky              ');
+select ltrim('           sky              ');
+select rtrim('           sky              ');
+
+select first_name, left(first_name,3)
+from employee_demographics;
+
+select first_name, right(first_name,3)
+from employee_demographics;
+
+select first_name, substring(first_name,3,2)
+from employee_demographics;
+
+select birth_date, substring(birth_date,6,2) as birth_month
+from employee_demographics;
+
+select first_name, replace(first_name,'a','z')
+from employee_demographics;
+
+select first_name, locate('a',first_name)
+from employee_demographics;
+
+select first_name, last_name,
+concat(first_name,' ',last_name) as full_name
+from employee_demographics;
+
+select first_name,last_name,age,
+case
+	when age<30 then 'young'
+    when age between 31 and 50 then 'old'
+    when age>50 then 'older'
+end as Label
+from employee_demographics;
+
+
+-- Pay Increase
+-- <50000 5% inrease
+-- >50000 7% increase
+-- department Finance 10% increase
+
+select first_name,last_name,salary,
+case
+    when salary<50000 then salary + (salary * 1.05)
+    when salary>50000 then salary + (salary * 1.07)
+end as new_salary,
+case
+	when dept_id = 6 then salary + (salary *1.1)
+end as Bonus
+from employee_salary;
+
+-- Subqureis
+
+select * from employee_demographics
+where employee_id in 
+( select employee_id from employee_salary
+	where dept_id=1
+);
+
+select first_name,salary,
+(select avg(salary)
+from employee_salary)
+from employee_salary;
+
+select avg(avgage),avg(maxage) 
+from
+(select gender,
+avg(age) as avgage,
+max(age) as maxage,
+min(age) as minage,
+count(age) as countage
+from employee_demographics
+group by gender)as aggtable;
+
+-- Windows Functions
+
+select gender, avg(salary) 
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id
+group by gender;
+        
+select gender, avg(salary) over()
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+select ed.first_name,ed.last_name,gender, avg(salary) over(partition by gender)
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+
+select ed.first_name,ed.last_name,gender, sum(salary) over(partition by gender)
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+select ed.first_name,ed.last_name,gender, salary,
+sum(salary) over(partition by gender order by ed.employee_id) as Rolling_total
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+select ed.employee_id, ed.first_name,ed.last_name,gender, salary,
+row_number() over() as Row_Num
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+select ed.employee_id, ed.first_name,ed.last_name,gender, salary,
+row_number() over(partition by gender) as Row_Num
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+select ed.employee_id, ed.first_name,ed.last_name,gender, salary,
+row_number() over(partition by gender order by salary desc) as Row_Num
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+select ed.employee_id, ed.first_name,ed.last_name,gender, salary,
+row_number() over(partition by gender order by salary desc) as Row_Num,
+rank() over(partition by gender order by salary desc) as Rank_Num
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+select ed.employee_id, ed.first_name,ed.last_name,gender, salary,
+row_number() over(partition by gender order by salary desc) as Row_Num,
+dense_rank() over(partition by gender order by salary desc) as dense_Rank_Num
+from employee_demographics ed
+	join employee_salary es
+		on ed.employee_id = es.employee_id;
+        
+-- CTE   Common Table Expressions
+
+with cte_example as
+(
+select gender, avg(age) as avgage, max(age) as maxage, min(age) as minage,
+count(age) as countage
+from employee_demographics
+group by gender
+)
+select *
+from cte_example;
+
+select avg(avg_sal)
+from 
+(
+select gender, avg(salary) as avg_sal, max(salary) as max_sal, min(salary) as min_sal,
+count(salary) as count_sal
+from employee_demographics ed
+join employee_salary es
+on ed.employee_id = es.employee_id
+group by gender
+) as sub_query;
+
+with cte_example as
+(
+select employee_id,first_name,gender,birth_date
+from employee_demographics
+where birth_date > '1985-01-01'
+),
+cte_example2 as
+(
+select employee_id,salary
+from employee_salary
+where salary > 50000
+)
+select *
+from cte_example cte1
+join cte_example2 cte2
+	on cte1.employee_id = cte2.employee_id
+;
+
+
+-- Temporary Tables
+
+create temporary table salary_over_50k
+select * from employee_salary
+where salary > 50000;
+
+SELECT 
+    *
+FROM
+    salary_over_50k;
+    
+create procedure large_salaries()
+select * from employee_salary
+where salary >= 50000;
+
+
+call large_salaries();
